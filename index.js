@@ -3,7 +3,8 @@ var fs = require('fs')
 var https = require('https')
 var cors = require('cors')
 
-const { getLinkPreview, getPreviewFromContent } = require('link-preview-js')
+const urlMetadata = require('url-metadata')
+// const { getLinkPreview } = require('link-preview-js')
 
 
 const app = express()
@@ -17,10 +18,19 @@ app.get('/', (req, res) => {
 })
 
 app.post('/linkpreview', (req, res) => {
-  const url = req.body.url;
+  const url = new URL(req.body.url);
 
-  getLinkPreview(url)
-    .then((data) => res.send(data));
+  // getLinkPreview(url)
+  //   .then((data) => res.send(data));
+
+  urlMetadata(url).then(
+    (metadata) => { // success handler
+      console.log(metadata)
+      res.send(metadata)
+    },
+    (error) => { // failure handler
+      console.log(error)
+    })
 })
 
 
