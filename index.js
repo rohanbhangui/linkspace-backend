@@ -36,7 +36,9 @@ app.post('/linkpreview', (req, res) => {
 
 app.post('/getColors', async (req,res) => {
   let { ids, colors } = palette(await pixels(req.body.img));
-  res.send({ colors: colors.map(color => `rgba(${color.join(", ")})`) })
+  const correctedColor = colors.map(color => color.map((value, index) => index === 3 ? 1 : value)).map(color => `rgba (${color.join(", ")})`)
+  console.log("COLORS", colors, correctedColor)
+  res.send({ colors: correctedColor })
 })
 
 app.post('/getJson', (req,res) => {
