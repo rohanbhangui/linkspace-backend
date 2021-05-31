@@ -3,8 +3,12 @@ var fs = require('fs')
 var https = require('https')
 var cors = require('cors')
 
+var palette = require('image-palette')
+var pixels = require('image-pixels')
+
+var jsonld_request = require('jsonld-request');
+
 const urlMetadata = require('url-metadata')
-// const { getLinkPreview } = require('link-preview-js')
 
 
 const app = express()
@@ -20,9 +24,6 @@ app.get('/', (req, res) => {
 app.post('/linkpreview', (req, res) => {
   const url = new URL(req.body.url);
 
-  // getLinkPreview(url)
-  //   .then((data) => res.send(data));
-
   urlMetadata(url).then(
     (metadata) => { // success handler
       console.log(metadata)
@@ -31,6 +32,18 @@ app.post('/linkpreview', (req, res) => {
     (error) => { // failure handler
       console.log(error)
     })
+})
+
+app.post('/getColors', async (req,res) => {
+  let { ids, colors } = palette(await pixels(req.body.img));
+  res.send({ colors: colors.map(color => `rgba(${color.join(", ")})`) })
+})
+
+app.post('/getJson', (req,res) => {
+  jsonld_request(req.body.url, function (err, res, data) {
+    // handle errors or use data
+    res.send({ data })
+  });
 })
 
 
