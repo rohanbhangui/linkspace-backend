@@ -8,8 +8,25 @@ var pixels = require('image-pixels')
 
 var jsonld_request = require('jsonld-request');
 
-const urlMetadata = require('url-metadata')
+const urlMetadata = require('url-metadata');
 
+const cheerio = require('cheerio');
+const fetch = require('node-fetch');
+
+const metascraper = require('metascraper')([
+  require('metascraper-author')(),
+  require('metascraper-date')(),
+  require('metascraper-description')(),
+  require('metascraper-image')(),
+  require('metascraper-logo')(),
+  require('metascraper-clearbit')(),
+  require('metascraper-title')(),
+  require('metascraper-url')(),
+  require('metascraper-youtube')(),
+  require('@samirrayani/metascraper-shopping')()
+])
+
+const got = require('got')
 
 const app = express()
 const port = 8080
@@ -21,32 +38,51 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
-app.post('/linkpreview', (req, res) => {
+app.post('/linkpreview', async (req, res) => {
   const url = new URL(req.body.url);
 
-  urlMetadata(url).then(
-    (metadata) => { // success handler
-      console.log(metadata)
-      res.send(metadata)
-    },
-    (error) => { // failure handler
-      console.log(error)
-    })
+  const rawData = await urlMetadata(url);
+
+  const { body: html, url: getUrl } = await got(url.href)
+  
+  const metadata = await metascraper({ html, url: getUrl })
+
+  const scraperFetch = await fetch(url.href);
+  const scraperFetchHTML = await scraperFetch.text();
+  const $ = cheerio.load(scraperFetchHTML);
+
+  const getMetatag = (name) => 
+    $(`meta[name=${name}]`).attr('content') ||
+    $(`meta[property="og:${name}"]`).attr('content') ||
+    $(`meta[property="twitter:${name}"]`).attr('content')
+
+  const rawMetaData = {
+    title: $("title").text(),
+    favicon: $("link[rel='shortcut icon']").attr("href"),
+    description: getMetatag("description"),
+    image: getMetatag("image") || "",
+    author: getMetatag("author") || ""
+  }
+  
+  res.send({
+    ...rawData,
+    scraped: metadata,
+    scrapedRaw: rawMetaData
+  })
 })
 
 app.post('/getColors', async (req,res) => {
   let { ids, colors } = palette(await pixels(req.body.img));
   const correctedColor = colors.map(color => color.map((value, index) => index === 3 ? 1 : value)).map(color => `rgba (${color.join(", ")})`)
-  console.log("COLORS", colors, correctedColor)
   res.send({ colors: correctedColor })
 })
 
 app.post('/getJson', (req,res) => {
   jsonld_request(req.body.url, function (err, res, data) {
-    // handle errors or use data
     res.send({ data })
   });
-})
+});
+
 
 
 https.createServer({
