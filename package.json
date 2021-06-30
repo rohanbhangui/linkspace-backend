@@ -4,7 +4,8 @@
   "description": "backend for linkspace ",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "author": "Rohan Bhangui",
   "license": "ISC",
@@ -35,4 +36,7 @@
     "node-fetch": "^2.6.1",
     "url-metadata": "^2.5.0"
   }
+  "engines": {
+    "node": "12.x"
+  },
 }

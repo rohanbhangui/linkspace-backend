@@ -35,7 +35,7 @@ app.use(cors())
 app.use(express.json())
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('Server running!')
 })
 
 app.post('/linkpreview', async (req, res) => {
@@ -161,5 +161,5 @@ https.createServer({
   cert: fs.readFileSync('./server.cert')
 }, app)
 .listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`Started server at http://localhost:${port}`)
 })
