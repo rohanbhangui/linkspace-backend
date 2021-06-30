@@ -35,8 +35,8 @@
     "metascraper-youtube": "^5.22.0",
     "node-fetch": "^2.6.1",
     "url-metadata": "^2.5.0"
-  }
-  "engines": {
-    "node": "12.x"
   },
+  "engines": {
+    "node": "14.x"
+  }
 }
