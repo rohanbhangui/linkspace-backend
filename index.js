@@ -156,10 +156,16 @@ app.post('/getJson', (req,res) => {
   });
 });
 
-https.createServer({
-  key: fs.readFileSync('./server.key'),
-  cert: fs.readFileSync('./server.cert')
-}, app)
-.listen(port, () => {
-  console.log(`Started server at http://localhost:${port}`)
-})
+if(process.env.NODE_ENV === "development") {
+  https.createServer({
+    key: fs.readFileSync('./server.key'),
+    cert: fs.readFileSync('./server.cert')
+  }, app)
+    .listen(port, () => {
+      console.log(`Started server at http://localhost:${port}`)
+    })
+} else {
+  app.listen(port, () => {
+    console.log(`Started server at http://localhost:${port}`)
+  })
+}
