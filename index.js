@@ -34,6 +34,20 @@ const port = 8080
 app.use(cors())
 app.use(express.json())
 
+if (process.env.NODE_ENV === "development") {
+  https.createServer({
+    key: fs.readFileSync('./server.key'),
+    cert: fs.readFileSync('./server.cert')
+  }, app)
+    .listen(port, () => {
+      console.log(`Started server at http://localhost:${port}`)
+    })
+} else {
+  app.listen((process.env.PORT || port), () => {
+    console.log(`Started server at https://linkspace-backend.herokuapp.com`)
+  })
+}
+
 app.get('/', (req, res) => {
   res.send('Server running!')
 })
@@ -155,17 +169,3 @@ app.post('/getJson', (req,res) => {
     res.send({ data })
   });
 });
-
-if(process.env.NODE_ENV === "development") {
-  https.createServer({
-    key: fs.readFileSync('./server.key'),
-    cert: fs.readFileSync('./server.cert')
-  }, app)
-    .listen(port, () => {
-      console.log(`Started server at http://localhost:${port}`)
-    })
-} else {
-  app.listen(port, () => {
-    console.log(`Started server at http://localhost:${port}`)
-  })
-}
