@@ -67,8 +67,13 @@ app.post('/linkpreview', async (req, res) => {
 
   let data = {}
 
-  const urlObj = await urlExists(url.https.href) || await urlExists(url.httpsWWW.href) || await urlExists(url.http.href) || await urlExists(url.httpWWW.href)
+  const urlObj = 
+    await urlExists(url.httpsWWW.href) && url.httpsWWW ||
+    await urlExists(url.httpWWW.href) && url.httpWWW ||
+    await urlExists(url.https.href) && url.https ||
+    await urlExists(url.http.href) && url.http
 
+  console.log("DEBUG", urlObj)
   // scrapper #1
   try {
     const rawData = await urlMetadata(urlObj);
