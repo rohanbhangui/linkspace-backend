@@ -35,6 +35,7 @@
     "metascraper-url": "^5.22.0",
     "metascraper-youtube": "^5.22.0",
     "node-fetch": "^2.6.1",
+    "url-exists-nodejs": "^0.1.0",
     "url-metadata": "^2.5.0"
   },
   "engines": {

@@ -26,6 +26,8 @@ const metascraper = require('metascraper')([
   require('@samirrayani/metascraper-shopping')()
 ])
 
+const urlExists = require('url-exists-nodejs');
+
 const got = require('got')
 
 const app = express()
@@ -58,138 +60,74 @@ app.post('/linkpreview', async (req, res) => {
 
   const url = {
     http: new URL(`http://${parsed}`),
-    https: new URL(`https://${parsed}`)
+    https: new URL(`https://${parsed}`),
+    httpWWW: new URL(`http://www.${parsed}`),
+    httpsWWW: new URL(`https://www.${parsed}`)
   } 
 
   let data = {}
 
-  
+  const urlObj = await urlExists(url.https.href) || await urlExists(url.httpsWWW.href) || await urlExists(url.http.href) || await urlExists(url.httpWWW.href)
 
-  // if all scrappers fail then fire an error
+  // scrapper #1
   try {
-
-    console.log("DEBUG", url)
-
-    // scrapper #1
-    try {
-      const rawData = await urlMetadata(url.https);
-      data = {
-        ...data,
-        ...rawData
-      }
-    } catch(e) {
-      try {
-        const rawData = await urlMetadata(url.http);
-        data = {
-          ...data,
-          ...rawData
-        }
-      } catch(e) {
-        return res.status(400).send({
-          error: e
-        });
-      }
-
-      return res.status(400).send({
-        error: e
-      });
+    const rawData = await urlMetadata(urlObj);
+    data = {
+      ...data,
+      ...rawData
     }
-
-    // scrapper #2
-    try {
-      const { body: html, url: getUrl } = await got(url.https.href)
-      const metadata = await metascraper({ html, url: getUrl })
-
-      data = {
-        ...data,
-        scraped: metadata,
-      }
-    } catch(e) {
-      try {
-        const { body: html, url: getUrl } = await got(url.http.href)
-        const metadata = await metascraper({ html, url: getUrl })
-
-        data = {
-          ...data,
-          scraped: metadata,
-        }
-      } catch (e) {
-        return res.status(400).send({
-          error: e
-        });
-      }
-
-      return res.status(400).send({
-        error: e
-      });
-    }
-
-    //srapper #3
-    try {
-      const scraperFetch = await fetch(url.https.href);
-      const scraperFetchHTML = await scraperFetch.text();
-      const $ = cheerio.load(scraperFetchHTML);
-
-      const getMetatag = (name) =>
-        $(`meta[name=${name}]`).attr('content') ||
-        $(`meta[property="og:${name}"]`).attr('content') ||
-        $(`meta[property="twitter:${name}"]`).attr('content')
-
-      const rawMetaData = {
-        title: $("title").text(),
-        favicon: $("link[rel='shortcut icon']").attr("href"),
-        description: getMetatag("description"),
-        image: getMetatag("image") || "",
-        author: getMetatag("author") || "",
-        url: url.https.href
-      }
-
-      data = {
-        ...data,
-        scrapedRaw: rawMetaData,
-      }
-    } catch(e) {
-      try {
-        const scraperFetch = await fetch(url.http.href);
-        const scraperFetchHTML = await scraperFetch.text();
-        const $ = cheerio.load(scraperFetchHTML);
-
-        const getMetatag = (name) =>
-          $(`meta[name=${name}]`).attr('content') ||
-          $(`meta[property="og:${name}"]`).attr('content') ||
-          $(`meta[property="twitter:${name}"]`).attr('content')
-
-        const rawMetaData = {
-          title: $("title").text(),
-          favicon: $("link[rel='shortcut icon']").attr("href"),
-          description: getMetatag("description"),
-          image: getMetatag("image") || "",
-          author: getMetatag("author") || "",
-          url: url.http.href
-        }
-
-        data = {
-          ...data,
-          scrapedRaw: rawMetaData,
-        }
-      } catch (e) {
-        return res.status(400).send({
-          error: e
-        });
-      }
-
-      return res.status(400).send({
-        error: e
-      });
-    }
-
-    return res.send(data)
-
-  } catch(e) {
+  } catch (e) {
     return res.status(400).send({
       error: e
-    })
+    });
   }
+
+  // scrapper #2
+  try {
+    const { body: html, url: getUrl } = await got(urlObj.href)
+    const metadata = await metascraper({ html, url: getUrl })
+
+    data = {
+      ...data,
+      scraped: metadata,
+    }
+  } catch (e) {
+    return res.status(400).send({
+      error: e
+    });
+  }
+
+  //srapper #3
+  try {
+    const scraperFetch = await fetch(urlObj.href);
+    const scraperFetchHTML = await scraperFetch.text();
+    const $ = cheerio.load(scraperFetchHTML);
+
+    const getMetatag = (name) =>
+      $(`meta[name=${name}]`).attr('content') ||
+      $(`meta[property="og:${name}"]`).attr('content') ||
+      $(`meta[property="twitter:${name}"]`).attr('content')
+
+    const rawMetaData = {
+      title: $("title").text(),
+      favicon: $("link[rel='shortcut icon']").attr("href"),
+      description: getMetatag("description"),
+      image: getMetatag("image") || "",
+      author: getMetatag("author") || "",
+      url: urlObj.href
+    }
+
+    data = {
+      ...data,
+      scrapedRaw: rawMetaData,
+    }
+  } catch (e) {
+    return res.status(400).send({
+      error: e
+    });
+  }
+
+  return res.send(data)
 })
 
 app.post('/getColors', async (req,res) => {
