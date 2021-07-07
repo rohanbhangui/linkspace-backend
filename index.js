@@ -63,6 +63,8 @@ app.post('/linkpreview', async (req, res) => {
 
   let data = {}
 
+  
+
   // if all scrappers fail then fire an error
   try {
 
@@ -83,12 +85,12 @@ app.post('/linkpreview', async (req, res) => {
           ...rawData
         }
       } catch(e) {
-        res.status(400).send({
+        return res.status(400).send({
           error: e
         });
       }
 
-      res.status(400).send({
+      return res.status(400).send({
         error: e
       });
     }
@@ -112,12 +114,12 @@ app.post('/linkpreview', async (req, res) => {
           scraped: metadata,
         }
       } catch (e) {
-        res.status(400).send({
+        return res.status(400).send({
           error: e
         });
       }
 
-      res.status(400).send({
+      return res.status(400).send({
         error: e
       });
     }
@@ -171,20 +173,20 @@ app.post('/linkpreview', async (req, res) => {
           scrapedRaw: rawMetaData,
         }
       } catch (e) {
-        res.status(400).send({
+        return res.status(400).send({
           error: e
         });
       }
 
-      res.status(400).send({
+      return res.status(400).send({
         error: e
       });
     }
 
-    res.send(data)
+    return res.send(data)
 
   } catch(e) {
-    res.status(400).send({
+    return res.status(400).send({
       error: e
     })
   }
