@@ -56,9 +56,9 @@ app.get('/', (req, res) => {
 
 app.post('/linkpreview', async (req, res) => {
   const parsed = req.body.url.replace(/(^\w+:|^)\/\//, '');
-  console.log("DEBUG", parsed)
+  console.log("DEBUG url", parsed)
 
-  const url = {
+  const urls = {
     http: new URL(`http://${parsed}`),
     https: new URL(`https://${parsed}`),
     httpWWW: new URL(`http://www.${parsed}`),
@@ -67,13 +67,27 @@ app.post('/linkpreview', async (req, res) => {
 
   let data = {}
 
-  const urlObj = 
-    await urlExists(url.httpsWWW.href) && url.httpsWWW ||
-    await urlExists(url.httpWWW.href) && url.httpWWW ||
-    await urlExists(url.https.href) && url.https ||
-    await urlExists(url.http.href) && url.http
+  const getUrlObj = async () => {
+    
+    for(const key of Object.keys(urls)) {
+      const url = urls[key]
 
-  console.log("DEBUG", urlObj)
+      console.log("DEBUG", url)
+
+      const scraperFetch = await fetch(url.href);
+      const scraperFetchHTML = await scraperFetch.text();
+      const $ = cheerio.load(scraperFetchHTML);
+
+      if ($("title").text()) {
+        return url
+      }
+    }
+
+    return false
+  }
+
+  const urlObj = await getUrlObj()
+  
   // scrapper #1
   try {
     const rawData = await urlMetadata(urlObj);
