@@ -66,6 +66,8 @@ app.post('/linkpreview', async (req, res) => {
   // if all scrappers fail then fire an error
   try {
 
+    console.log("DEBUG", url)
+
     // scrapper #1
     try {
       const rawData = await urlMetadata(url.https);
@@ -74,11 +76,21 @@ app.post('/linkpreview', async (req, res) => {
         ...rawData
       }
     } catch(e) {
-      const rawData = await urlMetadata(url.http);
-      data = {
-        ...data,
-        ...rawData
+      try {
+        const rawData = await urlMetadata(url.http);
+        data = {
+          ...data,
+          ...rawData
+        }
+      } catch(e) {
+        res.status(400).send({
+          error: e
+        });
       }
+
+      res.status(400).send({
+        error: e
+      });
     }
 
     // scrapper #2
@@ -91,13 +103,23 @@ app.post('/linkpreview', async (req, res) => {
         scraped: metadata,
       }
     } catch(e) {
-      const { body: html, url: getUrl } = await got(url.http.href)
-      const metadata = await metascraper({ html, url: getUrl })
+      try {
+        const { body: html, url: getUrl } = await got(url.http.href)
+        const metadata = await metascraper({ html, url: getUrl })
 
-      data = {
-        ...data,
-        scraped: metadata,
+        data = {
+          ...data,
+          scraped: metadata,
+        }
+      } catch (e) {
+        res.status(400).send({
+          error: e
+        });
       }
+
+      res.status(400).send({
+        error: e
+      });
     }
 
     //srapper #3
@@ -125,28 +147,38 @@ app.post('/linkpreview', async (req, res) => {
         scrapedRaw: rawMetaData,
       }
     } catch(e) {
-      const scraperFetch = await fetch(url.http.href);
-      const scraperFetchHTML = await scraperFetch.text();
-      const $ = cheerio.load(scraperFetchHTML);
+      try {
+        const scraperFetch = await fetch(url.http.href);
+        const scraperFetchHTML = await scraperFetch.text();
+        const $ = cheerio.load(scraperFetchHTML);
 
-      const getMetatag = (name) =>
-        $(`meta[name=${name}]`).attr('content') ||
-        $(`meta[property="og:${name}"]`).attr('content') ||
-        $(`meta[property="twitter:${name}"]`).attr('content')
+        const getMetatag = (name) =>
+          $(`meta[name=${name}]`).attr('content') ||
+          $(`meta[property="og:${name}"]`).attr('content') ||
+          $(`meta[property="twitter:${name}"]`).attr('content')
 
-      const rawMetaData = {
-        title: $("title").text(),
-        favicon: $("link[rel='shortcut icon']").attr("href"),
-        description: getMetatag("description"),
-        image: getMetatag("image") || "",
-        author: getMetatag("author") || "",
-        url: url.http.href
+        const rawMetaData = {
+          title: $("title").text(),
+          favicon: $("link[rel='shortcut icon']").attr("href"),
+          description: getMetatag("description"),
+          image: getMetatag("image") || "",
+          author: getMetatag("author") || "",
+          url: url.http.href
+        }
+
+        data = {
+          ...data,
+          scrapedRaw: rawMetaData,
+        }
+      } catch (e) {
+        res.status(400).send({
+          error: e
+        });
       }
 
-      data = {
-        ...data,
-        scrapedRaw: rawMetaData,
-      }
+      res.status(400).send({
+        error: e
+      });
     }
 
     res.send(data)
