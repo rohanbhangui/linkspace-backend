@@ -26,7 +26,7 @@ const metascraper = require('metascraper')([
   require('@samirrayani/metascraper-shopping')()
 ])
 
-const urlExists = require('url-exists-nodejs');
+const { default: urlExists} = require('url-exists-deep');
 
 const got = require('got')
 
@@ -56,13 +56,12 @@ app.get('/', (req, res) => {
 
 app.post('/linkpreview', async (req, res) => {
   const parsed = req.body.url.replace(/(^\w+:|^)\/\//, '');
-  console.log("DEBUG url", parsed)
 
   const urls = {
-    http: new URL(`http://${parsed}`),
     https: new URL(`https://${parsed}`),
+    httpsWWW: new URL(`https://www.${parsed}`),
     httpWWW: new URL(`http://www.${parsed}`),
-    httpsWWW: new URL(`https://www.${parsed}`)
+    http: new URL(`http://${parsed}`),
   } 
 
   let data = {}
@@ -72,13 +71,17 @@ app.post('/linkpreview', async (req, res) => {
     for(const key of Object.keys(urls)) {
       const url = urls[key]
 
-      console.log("DEBUG", url)
+      // const scraperFetch = await fetch(url.href);
+      // const scraperFetchHTML = await scraperFetch.text();
+      // const $ = cheerio.load(scraperFetchHTML);
 
-      const scraperFetch = await fetch(url.href);
-      const scraperFetchHTML = await scraperFetch.text();
-      const $ = cheerio.load(scraperFetchHTML);
+      // if ($("title").text()) {
+      //   return url
+      // }
 
-      if ($("title").text()) {
+      const doesUrlExists = await urlExists(url.href)
+
+      if(doesUrlExists) {
         return url
       }
     }
@@ -87,7 +90,9 @@ app.post('/linkpreview', async (req, res) => {
   }
 
   const urlObj = await getUrlObj()
-  
+
+  console.log("DEBUG final", urlObj)
+
   // scrapper #1
   try {
     const rawData = await urlMetadata(urlObj);
