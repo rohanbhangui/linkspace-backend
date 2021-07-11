@@ -71,19 +71,19 @@ app.post('/linkpreview', async (req, res) => {
     for(const key of Object.keys(urls)) {
       const url = urls[key]
 
-      // const scraperFetch = await fetch(url.href);
-      // const scraperFetchHTML = await scraperFetch.text();
-      // const $ = cheerio.load(scraperFetchHTML);
+      const scraperFetch = await fetch(url.href);
+      const scraperFetchHTML = await scraperFetch.text();
+      const $ = cheerio.load(scraperFetchHTML);
 
-      // if ($("title").text()) {
-      //   return url
-      // }
-
-      const doesUrlExists = await urlExists(url.href)
-
-      if(doesUrlExists) {
+      if ($("title").text()) {
         return url
       }
+
+      // const doesUrlExists = await urlExists(url.href)
+
+      // if(doesUrlExists) {
+      //   return url
+      // }
     }
 
     return false
